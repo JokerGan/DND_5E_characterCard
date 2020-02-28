@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>DND5E</title>
+	<link rel="stylesheet" href="">
+	<script type="text/javascript" charset="utf-8">
+		function save_character(){
+			var SAVING = {};
+		  	var temp_key = '';
+		  	
+			var inputs = document.getElementsByTagName("input");
+			for (var i = 0; i < inputs.length; i++) {
+				if (inputs[i].id) {
+					temp_key = inputs[i].id;
+					switch(inputs[i].type){
+						case "text":
+							SAVING[temp_key] = inputs[i].value;
+							break;
+						case "checkbox":
+							SAVING[temp_key] = inputs[i].checked;
+							break;
+						case "number":
+							SAVING[temp_key] = inputs[i].value;
+							break;
+						default:
+							console.error("未知type");
+							break;
+					}
+				}
+			}
+
+			var selects = document.getElementsByTagName("select");
+			for (var i = 0; i < selects.length; i++) {
+				SAVING[selects[i].id] = selects[i].selectedIndex;
+			}
+
+			var textareas  = document.getElementsByTagName("textarea");
+			for (var i = 0; i < textareas.length; i++) {
+				SAVING[textareas[i].id] = textareas[i].value;
+			}
+
+			var jsonStr = JSON.stringify(SAVING);
+
+			jsonStr = jsonStr.replace(/\\n/g,"<换行>");
+			jsonStr = "load_string='" + jsonStr +"'";
+
+			console.log(jsonStr);
+		}
+
+		// 这个变量需要在控制台中手动输入,load前需要把\n替换为\\n
+		var load_string = "";
+		function load_character(){
+			// 字符串转json对象
+			var character_json = eval('(' + load_string + ')');
+
+			var inputs = document.getElementsByTagName("input");
+			for (var i = 0; i < inputs.length; i++) {
+				if (inputs[i].id) {
+					switch(inputs[i].type){
+						case "text":
+							inputs[i].value = character_json[inputs[i].id];
+							break;
+						case "checkbox":
+							inputs[i].checked = character_json[inputs[i].id];
+							break;
+						case "number":
+							inputs[i].value = character_json[inputs[i].id];
+							break;
+						default:
+							console.error("未知type");
+							break;
+					}
+				}
+			}
+
+			var selects = document.getElementsByTagName("select");
+			for (var i = 0; i < selects.length; i++) {
+				selects[i].selectedIndex = character_json[selects[i].id];
+			}
+
+			var textareas  = document.getElementsByTagName("textarea");
+			for (var i = 0; i < textareas.length; i++) {
+				textareas[i].value = character_json[textareas[i].id];
+				textareas[i].value = textareas[i].value.replace(/<换行>/g,"\n");
+
+			}
+
+			ability_modifier_calc();
+			proficiency_bonus_got();
+			skill_bounds_calc();
+			saving_throws_bouns_calc();
+			armor_class_calc();
+			hit_point_calc();
+			spellcasting_ability_calc();
+		}
+	</script>
+	<style type="text/css">
+		table{
+			border: 1px solid #000;
+			text-align:center;
+		}
+		td{
+			border-bottom: 1px solid #000;
+			text-align:center;
+		}
+		input[type="text"]{
+			width: 80px;
+		}
+
+		input[type="number"]{
+			width: 30px;
+		}
+		.input_150{
+			width: 150px !important;
+		}
+		.input_30{
+			width: 30px !important;
+		}
+		.input_150{
+			width: 150px !important;
+		}
+		.input_200{
+			width: 200px !important;
+		}
+		.expertise_skill{
+			display:none;
+		}
+		#ability_table{
+			position:absolute;
+			top: 0px;
+			left: 0px;
+		}
+		#proficiency_bonus_div{
+			position:absolute;
+			top: 380px;
+			left: 0px;
+			text-align:center;
+		}
+		#skills_table{
+			position:absolute;
+			top: 0px;
+			left: 110px;
+		}
+		#passive_wisdom_perception_div{
+			position:absolute;
+			top: 430px;
+			left: 0px;
+			border: 1px solid #000;
+			text-align:center;
+		}
+		#initiative_bonus_div{
+			position:absolute;
+			top: 175px;
+			left: 655px;
+			border: 1px solid #000;
+		}
+		#saving_throws_table{
+			position:absolute;
+			top: 180px;
+			left: 0px;
+		}
+		#character_info_table{
+			position:absolute;
+			top: 0px;
+			left: 270px;
+		}
+		#hp_info_table{
+			position:absolute;
+			top: 175px;
+			left: 270px;
+		}
+		#attack_table{
+			position:absolute;
+			top: 295px;
+			left: 270px;
+		}
+		#armor_info{
+			position:absolute;
+			top: 175px;
+			left: 550px;
+			border: 1px solid #000;
+			text-align:center;
+		}
+		#personal_characteristics_div{
+			position:absolute;
+			top: 770px;
+			left: 10px;
+		}
+		#proficiencies_language_table{
+			position:absolute;
+			top: 590px;
+			left: 10px;
+		}
+		#items{
+			position:absolute;
+			top: 545px;
+			left: 270px;
+		}
+		#items2{
+			position:absolute;
+			top: 553px;
+			left: 465px;
+			text-align:center;
+
+		}
+		#character_backstory_div{
+			position:absolute;
+			top: 1210px;
+			left: 0px;
+		}
+		#magicbook_div{
+			position:absolute;
+			top: 1100px;
+			left: 180px;
+		}
+		#treasures_div{
+			position:absolute;
+			top: 1690px;
+			left: 0px;
+		}
+		#feature_details_div{
+			position:absolute;
+			top: 2175px;
+			left: 0px;
+		}
+		#spellcasting_ability_div{
+			position:absolute;
+			top: 1100px;
+			left: 10px;
+		}
+		#special_deal_div{
+			position:absolute;
+			top: 3300px;
+			left: 10px;
+			display:none;
+		}
+		
+	</style>
+</head>
+<body>
+	<div id='console_div' style="z-index:99999;position:absolute;background-color: yellow;display:none">
+		<button onclick="save_character()">在控制台导出人物json</button><br>
+		<button onclick="load_character()">导入角色（需要先在控制台手动粘贴load_string变量）</button><br>
+		<button onclick="show_expertise_and_special_deal()">显示技能专精checkbox及特殊调整工具div</button><br>
+		<button onclick="hide_expertise_and_special_deal()">隐藏技能专精checkbox及特殊调整工具div</button><br>
+		<br>
+		<button onclick="(function(){document.querySelector('#console_div').style.display='none';})()">关闭控制窗口</button>
+	</div>
+	<table id="ability_table">
+		<tr>
+			<td>力量</td>
+			<td><input class='abilityScoresInput' id="Strength" name="Strength" type="number" value=10 max=20 min=1/></td>
+			<td id="Strength_mod">0</td>
+		</tr>
+		<tr>
+			<td>敏捷</td>
+			<td><input class='abilityScoresInput' id="Dexterity" name="Dexterity" type="number" value=10 max=20 min=1/></td>
+			<td id="Dexterity_mod">0</td>
+		</tr>
+		<tr>
+			<td>体质</td>
+			<td><input class='abilityScoresInput' id="Constitution" name="Constitution" type="number" value=10 max=20 min=1/></td>
+			<td id="Constitution_mod">0</td>
+		</tr>
+		<tr>
+			<td onclick="(function(){document.querySelector('#console_div').style.display='';})()">智力</td>
+			<td><input class='abilityScoresInput' id="Intelligence" name="Intelligence" type="number" value=10 max=20 min=1/></td>
+			<td id="Intelligence_mod">0</td>
+		</tr>
+		<tr>
+			<td>感知</td>
+			<td><input class='abilityScoresInput' id="Wisdom" name="Wisdom" type="number" value=10 max=20 min=1/></td>
+			<td id="Wisdom_mod">0</td>
+		</tr>
+		<tr>
+			<td>魅力</td>
+			<td><input class='abilityScoresInput' id="Charisma" name="Charisma" type="number" value=10 max=20 min=1/></td>
+			<td id="Charisma_mod">0</td>
+		</tr>
+	</table>
+	<br>
+	<div id="proficiency_bonus_div">
+		熟练加值<br><input id="proficiency_bonus" name="proficiency_bonus" type="number" value=0 onchange="proficiency_bonus_got()" /><br>
+	</div>
+	<table id="skills_table">
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_athletics" id="proficiency_athletics" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_athletics" id="expertise_athletics" >
+				</td>
+				<td>运动<font color="gray">(力量)</font></td>
+				<td id="athletics_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_acrobatics" id="proficiency_acrobatics" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_acrobatics" id="expertise_acrobatics" >
+				</td>
+				<td>体操<font color="gray">(敏捷)</font></td>
+				<td id="acrobatics_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_sleight_of_hand" id="proficiency_sleight_of_hand" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_sleight_of_hand" id="expertise_sleight_of_hand" >
+				</td>
+				<td>巧手<font color="gray">(敏捷)</font></td>
+				<td id="sleight_of_hand_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_stealth" id="proficiency_stealth" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_stealth" id="expertise_stealth" >
+				</td>
+				<td>隐匿<font color="gray">(敏捷)</font></td>
+				<td id="stealth_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_arcana" id="proficiency_arcana" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_arcana" id="expertise_arcana" >
+				</td>
+				<td>奥秘<font color="gray">(知识)</font></td>
+				<td id="arcana_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_history" id="proficiency_history" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_history" id="expertise_history" >
+				</td>
+				<td>历史<font color="gray">(知识)</font></td>
+				<td id="history_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_investigation" id="proficiency_investigation" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_investigation" id="expertise_investigation" >
+				</td>
+				<td>调查<font color="gray">(知识)</font></td>
+				<td id="investigation_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_nature" id="proficiency_nature" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_nature" id="expertise_nature" >
+				</td>
+				<td>自然<font color="gray">(知识)</font></td>
+				<td id="nature_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_religion" id="proficiency_religion" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_religion" id="expertise_religion" >
+				</td>
+				<td>宗教<font color="gray">(知识)</font></td>
+				<td id="religion_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_animahandling" id="proficiency_animahandling" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_animahandling" id="expertise_animahandling" >
+				</td>
+				<td>驯兽<font color="gray">(感知)</font></td>
+				<td id="animahandling_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_insight" id="proficiency_insight" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_insight" id="expertise_insight" >
+				</td>
+				<td>洞悉<font color="gray">(感知)</font></td>
+				<td id="insight_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_medicine" id="proficiency_medicine" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_medicine" id="expertise_medicine" >
+				</td>
+				<td>医药<font color="gray">(感知)</font></td>
+				<td id="medicine_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_perception" id="proficiency_perception" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_perception" id="expertise_perception" >
+				</td>
+				<td>察觉<font color="gray">(感知)</font></td>
+				<td id="perception_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_survival" id="proficiency_survival" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_survival" id="expertise_survival" >
+				</td>
+				<td>求生<font color="gray">(感知)</font></td>
+				<td id="survival_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_deception" id="proficiency_deception" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_deception" id="expertise_deception" >
+				</td>
+				<td>欺瞒<font color="gray">(魅力)</font></td>
+				<td id="deception_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_intimidation" id="proficiency_intimidation" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_intimidation" id="expertise_intimidation" >
+				</td>
+				<td>威吓<font color="gray">(魅力)</font></td>
+				<td id="intimidation_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_performance" id="proficiency_performance" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_performance" id="expertise_performance" >
+				</td>
+				<td>表演<font color="gray">(魅力)</font></td>
+				<td id="performance_bonus">0</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="proficiency_persuasion" id="proficiency_persuasion" >
+					<input type="checkbox"  class="expertise_skill" name="expertise_persuasion" id="expertise_persuasion" >
+				</td>
+				<td>游说<font color="gray">(魅力)</font></td>
+				<td id="persuasion_bonus">0</td>
+			</tr>
+			<tr><td><input type="checkbox" id='proficiency_custom_skill1'></td><td><input type="text" id='custom_skill1'><input type="checkbox"  class="expertise_skill" name="expertise_custom_skill1" id="expertise_custom_skill1" ></td><td><input type='number' id='custom_skill1_bouns'></td></tr>
+			<tr><td><input type="checkbox" id='proficiency_custom_skill2'></td><td><input type="text" id='custom_skill2'><input type="checkbox"  class="expertise_skill" name="expertise_custom_skill2" id="expertise_custom_skill2" ></td><td><input type='number' id='custom_skill2_bouns'></td></tr>
+			<tr><td><input type="checkbox" id='proficiency_custom_skill3'></td><td><input type="text" id='custom_skill3'><input type="checkbox"  class="expertise_skill" name="expertise_custom_skill3" id="expertise_custom_skill3" ></td><td><input type='number' id='custom_skill3_bouns'></td></tr>
+			<tr><td><input type="checkbox" id='proficiency_custom_skill4'></td><td><input type="text" id='custom_skill4'><input type="checkbox"  class="expertise_skill" name="expertise_custom_skill4" id="expertise_custom_skill4" ></td><td><input type='number' id='custom_skill4_bouns'></td></tr>
+	</table>
+	<br>
+	<div id="passive_wisdom_perception_div">被动感知 <br>( 察觉 )<div id="passive_wisdom_perception" name="passive_wisdom_perception">10</div></div>
+	<div id="initiative_bonus_div">先攻加值<div id="initiative_bonus" name="initiative_bonus">0</div></div>
+	<table id='saving_throws_table'>
+		<tr>
+			<td colspan="3">属性豁免</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_strength" id="proficiency_saving_throws_strength" ></td>
+			<td>力量</td>
+			<td id="saving_throws_strength_bouns">0</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_dexterity" id="proficiency_saving_throws_dexterity" ></td>
+			<td>敏捷</td>
+			<td id="saving_throws_dexterity_bouns">0</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_constitution" id="proficiency_saving_throws_constitution" ></td>
+			<td>体质</td>
+			<td id="saving_throws_constitution_bouns">0</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_intelligence" id="proficiency_saving_throws_intelligence" ></td>
+			<td>智力</td>
+			<td id="saving_throws_intelligence_bouns">0</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_wisdom" id="proficiency_saving_throws_wisdom" ></td>
+			<td>感知</td>
+			<td id="saving_throws_wisdom_bouns">0</td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" class="saving_throws_checkbox" name="proficiency_saving_throws_charisma" id="proficiency_saving_throws_charisma" ></td>
+			<td>魅力</td>
+			<td id="saving_throws_charisma_bouns">0</td>
+		</tr>
+	</table>
+	
+	<div id='armor_info'>
+		AC<div id="armor_class" name="armor_class">10</div>
+		护甲（穿的）<br>
+		<select id="with_armor" name="with_armor" onchange="armor_class_calc()">
+			<option value=""></option>
+		</select><br>
+		持盾
+		<input type="checkbox" name="with_shield" id="with_shield" onchange="armor_class_calc()">
+	</div>
+
+	<table id='attack_table'>
+		<caption>攻击方式</caption>
+		<thead>
+			<tr>
+				<td>名称</td>
+				<td>攻击加值</td>
+				<td>攻击范围</td>
+				<td>伤害骰&类型</td>
+				<td>备注</td>
+			</tr>
+		</thead>
+		<tbody>
+			<tr><td><input type='text' id='attatck1_name'></td><td><input type='text' id='attatck1_bouns' class="input_30"></td><td><input type='text' id='attatck1_range'></td><td><input type='text' id='attatck1_damage'></td><td><input type='text' id='attatck1_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck2_name'></td><td><input type='text' id='attatck2_bouns' class="input_30"></td><td><input type='text' id='attatck2_range'></td><td><input type='text' id='attatck2_damage'></td><td><input type='text' id='attatck2_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck3_name'></td><td><input type='text' id='attatck3_bouns' class="input_30"></td><td><input type='text' id='attatck3_range'></td><td><input type='text' id='attatck3_damage'></td><td><input type='text' id='attatck3_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck4_name'></td><td><input type='text' id='attatck4_bouns' class="input_30"></td><td><input type='text' id='attatck4_range'></td><td><input type='text' id='attatck4_damage'></td><td><input type='text' id='attatck4_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck5_name'></td><td><input type='text' id='attatck5_bouns' class="input_30"></td><td><input type='text' id='attatck5_range'></td><td><input type='text' id='attatck5_damage'></td><td><input type='text' id='attatck5_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck6_name'></td><td><input type='text' id='attatck6_bouns' class="input_30"></td><td><input type='text' id='attatck6_range'></td><td><input type='text' id='attatck6_damage'></td><td><input type='text' id='attatck6_remark' class='input_150'></td></tr>
+			<tr><td><input type='text' id='attatck7_name'></td><td><input type='text' id='attatck7_bouns' class="input_30"></td><td><input type='text' id='attatck7_range'></td><td><input type='text' id='attatck7_damage'></td><td><input type='text' id='attatck7_remark' class='input_150'></td></tr>
+		</tbody>
+	</table>
+
+	<table id='hp_info_table'>
+		<tr>
+		<td></td>
+		<td id='max-HP' name='max-HP'></td>
+		<td></td>
+		<td rowspan="2">死亡豁免</td>
+	</tr>
+	<tr>
+		<td>HP</td>
+		<td>最大HP</td>
+		<td>临时HP</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<select id="hit_point_dice" name="hit_point_dice" onchange="hit_point_calc()">
+				<option value=""></option>
+				<option value="1d4">1d4</option>
+				<option value="1d6">1d6</option>
+				<option value="1d8">1d8</option>
+				<option value="1d10">1d10</option>
+				<option value="1d12">1d12</option>
+			</select>
+		</td>
+		<td><input type='number' id='hit_point_dice_count'></td>
+		<td>成功<input type="checkbox"><input type="checkbox"><input type="checkbox"></td>
+	</tr>
+	<tr>
+		<td colspan="2">生命骰</td>
+		<td>生命骰数量</td>
+		<td>失败<input type="checkbox"><input type="checkbox"><input type="checkbox"></td>
+	</tr>
+	</table>
+	
+	<table id='character_info_table'>
+		<tr>
+			<td>姓名</td>
+			<td>性别</td>
+			<td>年龄</td>
+			<td>种族&亚种</td>		
+			<td>体型</td>
+		</tr>
+		<tr>
+			<td><input type="text" id="name" name="name" class='input_150'></td>
+			<td>
+				<select id="sex" name="sex">
+					<option value=""></option>
+					<option value="male">男</option>
+					<option value="female">女</option>
+				</select>
+			</td>
+			<td><input type="number" id="age" name="age"></td>
+			<td><input type="text" id="race" name="race"></td>		
+			<td>
+				<select id="size" name="size">
+					<option value=""></option>
+					<option value="small">小型</option>
+					<option value="middle">中型</option>
+				</select>
+			</td>		
+		</tr>
+		<tr>
+			<td>身高</td>
+			<td>体重</td>
+			<td>肤色</td>
+			<td>发色</td>
+			<td>瞳色</td>
+		</tr>
+		<tr>
+			<td><input type="text" id="height" name="height"></td>
+			<td><input type="text" id="weight" name="weight"></td>
+			<td><input type="text" id="skin" name="skin"></td>
+			<td><input type="text" id="hair" name="hair"></td>
+			<td><input type="text" id="eyes" name="eyes"></td>
+		</tr>
+
+		<tr>
+			<td>职业&等级</td>
+			<td>XP</td>
+			<td>阵营</td>
+			<td>背景</td>
+			<td>速度</td>
+		</tr>
+		<tr>
+			<td><input type="text" id="class_level" name="class_level" class='input_150'></td>
+			<td><input type="text" id="experience" name="experience"></td>
+			<td>
+				<select id="alignment" name="alignment">
+					<option value=""></option>
+					<option value='LG'>守序善良</option>
+					<option value='NG'>中立善良</option>
+					<option value='CG'>混乱善良</option>
+					<option value='LN'>守序中立</option>
+					<option value='N'>绝对中立</option>
+					<option value='CN'>混乱中立</option>
+					<option value='LE'>守序邪恶</option>
+					<option value='NE'>中立邪恶</option>
+					<option value='CE'>混乱邪恶</option>
+				</select>
+			</td>
+			<td><input type="text" id="background" name="background"></td>
+			<td><input type="number" id="speed" name="speed"></td>
+		</tr>
+	</table>
+	<table id="proficiencies_language_table">
+		<caption>熟练项&语言</caption>
+		<thead>
+			<tr>
+				<th>类型</th>
+				<th>熟练项</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>语言</td>
+				<td><input type="text" class="input_200" id="proficiencies_language"></td>
+			</tr>
+			<tr>
+				<td>武器</td>
+				<td><input type="text" class="input_200" id="proficiencies_weapon"></td>
+			</tr>
+			<tr>
+				<td>护甲</td>
+				<td><input type="text" class="input_200" id="proficiencies_armor"></td>
+			</tr>
+			<tr>
+				<td>其它</td>
+				<td><input type="text" class="input_200" id="proficiencies_other"></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div id="personal_characteristics_div">
+		个人特点<br>
+		<textarea rows='3' cols='31' id='personality_traits' name='personality_traits'></textarea><br>
+		理念<br>
+		<textarea rows='3' cols='31' id='ideals' name='ideals'></textarea><br>
+		羁绊<br>
+		<textarea rows='3' cols='31' id='bonds' name='bonds'></textarea><br>
+		缺陷<br>
+		<textarea rows='3' cols='31' id='flaws' name='flaws'></textarea><br>
+	</div>
+	
+	<table id="items">
+		<caption>物品栏</caption>
+		<tr>
+			<td>铜币<br><input type='number' id='coin_cp' name='coin_cp' ></td>
+			<td>银币<br><input type='number' id='coin_sp' name='coin_sp' ></td>
+			<td>银金币<br><input type='number' id='coin_ep' name='coin_ep' ></td>
+		</tr>
+		<tr>
+			<td>金币<br><input type='number' id='coin_gp' name='coin_gp' ></td>
+			<td>铂金币<br><input type='number' id='coin_pp' name='coin_pp' ></td>
+			<td></td>
+		</tr>
+		<tr><td><input type='number' id='item1_count'></td><td><input type='text' id='item1_name'></td><td><input type='number' id='item1_weight'></td></tr>
+		<tr><td><input type='number' id='item2_count'></td><td><input type='text' id='item2_name'></td><td><input type='number' id='item2_weight'></td></tr>
+		<tr><td><input type='number' id='item3_count'></td><td><input type='text' id='item3_name'></td><td><input type='number' id='item3_weight'></td></tr>
+		<tr><td><input type='number' id='item4_count'></td><td><input type='text' id='item4_name'></td><td><input type='number' id='item4_weight'></td></tr>
+		<tr><td><input type='number' id='item5_count'></td><td><input type='text' id='item5_name'></td><td><input type='number' id='item5_weight'></td></tr>
+		<tr><td><input type='number' id='item6_count'></td><td><input type='text' id='item6_name'></td><td><input type='number' id='item6_weight'></td></tr>
+		<tr><td><input type='number' id='item7_count'></td><td><input type='text' id='item7_name'></td><td><input type='number' id='item7_weight'></td></tr>
+		<tr><td><input type='number' id='item8_count'></td><td><input type='text' id='item8_name'></td><td><input type='number' id='item8_weight'></td></tr>
+		<tr><td><input type='number' id='item9_count'></td><td><input type='text' id='item9_name'></td><td><input type='number' id='item9_weight'></td></tr>
+		<tr><td><input type='number' id='item10_count'></td><td><input type='text' id='item10_name'></td><td><input type='number' id='item10_weight'></td></tr>
+		<tr><td><input type='number' id='item11_count'></td><td><input type='text' id='item11_name'></td><td><input type='number' id='item11_weight'></td></tr>
+		<tr><td><input type='number' id='item12_count'></td><td><input type='text' id='item12_name'></td><td><input type='number' id='item12_weight'></td></tr>
+		<tr><td><input type='number' id='item13_count'></td><td><input type='text' id='item13_name'></td><td><input type='number' id='item13_weight'></td></tr>
+		<tr><td><input type='number' id='item14_count'></td><td><input type='text' id='item14_name'></td><td><input type='number' id='item14_weight'></td></tr>
+	</table>
+	<table id="items2">	
+		<tr><td><input type='number' id='item15_count'></td><td><input type='text' id='item15_name'></td><td><input type='number' id='item15_weight'></td></tr>
+		<tr><td><input type='number' id='item16_count'></td><td><input type='text' id='item16_name'></td><td><input type='number' id='item16_weight'></td></tr>
+		<tr><td><input type='number' id='item17_count'></td><td><input type='text' id='item17_name'></td><td><input type='number' id='item17_weight'></td></tr>
+		<tr><td><input type='number' id='item18_count'></td><td><input type='text' id='item18_name'></td><td><input type='number' id='item18_weight'></td></tr>
+		<tr><td><input type='number' id='item19_count'></td><td><input type='text' id='item19_name'></td><td><input type='number' id='item19_weight'></td></tr>
+		<tr><td><input type='number' id='item20_count'></td><td><input type='text' id='item20_name'></td><td><input type='number' id='item20_weight'></td></tr>
+		<tr><td><input type='number' id='item21_count'></td><td><input type='text' id='item21_name'></td><td><input type='number' id='item21_weight'></td></tr>
+		<tr><td><input type='number' id='item22_count'></td><td><input type='text' id='item22_name'></td><td><input type='number' id='item22_weight'></td></tr>
+		<tr><td><input type='number' id='item23_count'></td><td><input type='text' id='item23_name'></td><td><input type='number' id='item23_weight'></td></tr>
+		<tr><td><input type='number' id='item24_count'></td><td><input type='text' id='item24_name'></td><td><input type='number' id='item24_weight'></td></tr>
+		<tr><td><input type='number' id='item25_count'></td><td><input type='text' id='item25_name'></td><td><input type='number' id='item25_weight'></td></tr>
+		<tr><td><input type='number' id='item26_count'></td><td><input type='text' id='item26_name'></td><td><input type='number' id='item26_weight'></td></tr>
+		<tr><td><input type='number' id='item27_count'></td><td><input type='text' id='item27_name'></td><td><input type='number' id='item27_weight'></td></tr>
+		<tr><td><input type='number' id='item28_count'></td><td><input type='text' id='item28_name'></td><td><input type='number' id='item28_weight'></td></tr>
+		<tr><td><input type='number' id='item29_count'></td><td><input type='text' id='item29_name'></td><td><input type='number' id='item29_weight'></td></tr>
+		<tr><td><input type='number' id='item30_count'></td><td><input type='text' id='item30_name'></td><td><input type='number' id='item30_weight'></td></tr>
+		<tr><td><input type='number' id='item31_count'></td><td><input type='text' id='item31_name'></td><td><input type='number' id='item31_weight'></td></tr>
+		<tr><td><input type='number' id='item32_count'></td><td><input type='text' id='item32_name'></td><td><input type='number' id='item32_weight'></td></tr>
+	</table>
+
+	<div id="character_backstory_div">
+		角色背景故事<br>
+		<textarea rows='30' cols='20' id='character_backstory' name='character_backstory'></textarea>
+	</div>
+
+	<div id="magicbook_div">
+		魔法书<br>
+		<textarea rows='68' cols='73' id='magicbook' name='magicbook'></textarea>
+	</div>
+
+	<div id="treasures_div">
+		财富<br>
+		<textarea rows='28' cols='20' id='treasures' name='treasures'></textarea>
+	</div>
+
+	<div id="feature_details_div">
+		特性<br>
+		<textarea rows='69' cols='106' id='feature_details' name='feature_details'></textarea>
+	</div>
+
+	<div id="spellcasting_ability_div">
+		施法属性
+		<select id="spellcasting_ability" name="spellcasting_ability" onchange="spellcasting_ability_calc()">
+			<option value=""></option>
+			<option value="Strength">力量</option>
+			<option value="Dexterity">敏捷</option>
+			<option value="Constitution">体质</option>
+			<option value="Intelligence">智力</option>
+			<option value="Wisdom">感知</option>
+			<option value="Charisma">魅力</option>
+		</select><br>
+		法术豁免DC:
+		<div id="spell_save_dc" name="spell_save_dc" >0</div>
+		法术攻击加值:
+		<div id="spell_attack_bonus" name="spell_attack_bonus" >0</div>
+	</div>
+	<div id="special_deal_div">
+		<input type="checkbox" id="dwarvenToughness" onchange="hit_point_calc()">矮人刚毅（未制作人物升级计算）<br>
+		<input type="checkbox" id="unarmoredDefense_monk" onchange="armor_class_calc()">无甲防御（武僧）<br>
+		<input type="checkbox" id="unarmoredDefense_barbarian" onchange="armor_class_calc()">无甲防御（野蛮人）<br>
+		<input type="checkbox" id="fightingStyle_defense" onchange="armor_class_calc()">战斗风格:防御<br>
+		<input type="checkbox" id="draconicResilience" onchange="armor_class_calc();hit_point_calc();">龙族体魄<br>
+ 
+		
+	</div>
+</body>
+</html>
+
+<script type="text/javascript" charset="utf-8">
+	var ABILITY_SCORES_INPUT = {
+		"Strength":document.querySelector('#Strength'),
+		"Dexterity":document.querySelector('#Dexterity'),
+		"Constitution":document.querySelector('#Constitution'),
+		"Intelligence":document.querySelector('#Intelligence'),
+		"Wisdom":document.querySelector('#Wisdom'),
+		"Charisma":document.querySelector('#Charisma')
+	};
+	for(var k in ABILITY_SCORES_INPUT){
+		ABILITY_SCORES_INPUT[k].onchange=ability_modifier_calc;
+	}
+
+	// 属性调整值呈现td
+	var ABILITY_MODIFIER_TEXT = {
+		"Strength":document.querySelector('#Strength_mod'),
+		"Dexterity":document.querySelector('#Dexterity_mod'),
+		"Constitution":document.querySelector('#Constitution_mod'),
+		"Intelligence":document.querySelector('#Intelligence_mod'),
+		"Wisdom":document.querySelector('#Wisdom_mod'),
+		"Charisma":document.querySelector('#Charisma_mod')
+	};
+
+	// 属性调整值
+	var ABILITY_MODIFIER = {
+		"Strength":0,
+		"Dexterity":0,
+		"Constitution":0,
+		"Intelligence":0,
+		"Wisdom":0,
+		"Charisma":0
+	};
+
+	// 熟练加值
+	var PROFICIENCY_BONUS = 0;
+	var PROFICIENCY_BONUS_TEXT = document.querySelector('#proficiency_bonus');
+
+	// 技能数据，第一项关键属性,第二项页面呈现td，第三项熟练的checkbox，第四项专精的checkbox，
+	var SKILLS={
+		'athletics':['Strength',document.querySelector('#athletics_bonus'),document.querySelector('#proficiency_athletics'),document.querySelector('#expertise_athletics')],
+		'acrobatics':['Dexterity',document.querySelector('#acrobatics_bonus'),document.querySelector('#proficiency_acrobatics'),document.querySelector('#expertise_acrobatics')],
+		'sleight_of_hand':['Dexterity',document.querySelector('#sleight_of_hand_bonus'),document.querySelector('#proficiency_sleight_of_hand'),document.querySelector('#expertise_sleight_of_hand')],
+		'stealth':['Dexterity',document.querySelector('#stealth_bonus'),document.querySelector('#proficiency_stealth'),document.querySelector('#expertise_stealth')],
+		'arcana':['Intelligence',document.querySelector('#arcana_bonus'),document.querySelector('#proficiency_arcana'),document.querySelector('#expertise_arcana')],
+		'history':['Intelligence',document.querySelector('#history_bonus'),document.querySelector('#proficiency_history'),document.querySelector('#expertise_history')],
+		'investigation':['Intelligence',document.querySelector('#investigation_bonus'),document.querySelector('#proficiency_investigation'),document.querySelector('#expertise_investigation')],
+		'nature':['Intelligence',document.querySelector('#nature_bonus'),document.querySelector('#proficiency_nature'),document.querySelector('#expertise_nature')],
+		'religion':['Intelligence',document.querySelector('#religion_bonus'),document.querySelector('#proficiency_religion'),document.querySelector('#expertise_religion')],
+		'animahandling':['Wisdom',document.querySelector('#animahandling_bonus'),document.querySelector('#proficiency_animahandling'),document.querySelector('#expertise_animahandling')],
+		'insight':['Wisdom',document.querySelector('#insight_bonus'),document.querySelector('#proficiency_insight'),document.querySelector('#expertise_insight')],
+		'medicine':['Wisdom',document.querySelector('#medicine_bonus'),document.querySelector('#proficiency_medicine'),document.querySelector('#expertise_medicine')],
+		'perception':['Wisdom',document.querySelector('#perception_bonus'),document.querySelector('#proficiency_perception'),document.querySelector('#expertise_perception')],
+		'survival':['Wisdom',document.querySelector('#survival_bonus'),document.querySelector('#proficiency_survival'),document.querySelector('#expertise_survival')],
+		'deception':['Charisma',document.querySelector('#deception_bonus'),document.querySelector('#proficiency_deception'),document.querySelector('#expertise_deception')],
+		'intimidation':['Charisma',document.querySelector('#intimidation_bonus'),document.querySelector('#proficiency_intimidation'),document.querySelector('#expertise_intimidation')],
+		'performance':['Charisma',document.querySelector('#performance_bonus'),document.querySelector('#proficiency_performance'),document.querySelector('#expertise_performance')],
+		'persuasion':['Charisma',document.querySelector('#persuasion_bonus'),document.querySelector('#proficiency_persuasion'),document.querySelector('#expertise_persuasion')]
+	}
+	// 为技能熟练与专精勾选框批量添加触发事件
+	for(var k in SKILLS){
+		SKILLS[k][2].onchange=skill_bounds_calc;
+		SKILLS[k][3].onchange=skill_bounds_calc;
+	}
+	// 显示技能专精checkbox及特殊调整工具div
+	function show_expertise_and_special_deal(){
+		for(var k in SKILLS){
+			SKILLS[k][3].style.display="inline";
+		}
+		document.querySelector('#special_deal_div').style.display='inline'
+
+	}
+	// 隐藏技能专精checkbox及特殊调整工具div
+	function hide_expertise_and_special_deal(){
+		for(var k in SKILLS){
+			SKILLS[k][3].style.display="none";
+		}
+		document.querySelector('#special_deal_div').style.display='none'
+	}
+
+	// 先攻div
+	var initiative_bonus_text = document.querySelector('#initiative_bonus');
+
+	// 被动感知 ( 察觉 )
+	var passive_wisdom_perception = document.querySelector('#passive_wisdom_perception');
+
+	// 豁免数据，第一项页面呈现td，第二项checkbox的input
+	var SAVING_THROWS = {
+		'Strength':[document.querySelector('#saving_throws_strength_bouns'), document.querySelector('#proficiency_saving_throws_strength')],
+		'Dexterity':[document.querySelector('#saving_throws_dexterity_bouns'), document.querySelector('#proficiency_saving_throws_dexterity')],
+		'Constitution':[document.querySelector('#saving_throws_constitution_bouns'), document.querySelector('#proficiency_saving_throws_constitution')],
+		'Intelligence':[document.querySelector('#saving_throws_intelligence_bouns'), document.querySelector('#proficiency_saving_throws_intelligence')],
+		'Wisdom':[document.querySelector('#saving_throws_wisdom_bouns'), document.querySelector('#proficiency_saving_throws_wisdom')],
+		'Charisma':[document.querySelector('#saving_throws_charisma_bouns'), document.querySelector('#proficiency_saving_throws_charisma')]
+	}
+	// 为属性豁免勾选框批量添加触发事件
+	for(var k in SAVING_THROWS){
+		SAVING_THROWS[k][1].onchange=saving_throws_bouns_calc;
+	}
+
+	// AC呈现div
+	var armor_class=document.querySelector('#armor_class');
+
+	// 护甲数据，第一项：中文名称，第二项：基础ac，第三项最大ac值
+	var ARMOR_DATA = {
+		'padded': ['布甲', 11, 99],
+		'leather': ['皮甲', 11, 99],
+		'studded_leather': ['镶钉皮甲', 12, 99],
+		'hide': ['兽皮甲', 12, 2],
+		'chain_shirt': ['链甲衫', 13, 2],
+		'scale_mail': ['鳞甲', 14, 2],
+		'breastplate': ['胸甲', 14, 2],
+		'half_plate': ['半身板甲', 15, 2],
+		'ring_mail': ['环甲', 14, 0],
+		'chain_mail': ['链甲', 16, 0],
+		'splint': ['板条甲', 17, 0],
+		'plate': ['板甲', 18, 0]
+	}
+
+	// 穿甲的select
+	var with_armor = document.querySelector('#with_armor');
+	//  穿甲的select添加option
+	for(var k in ARMOR_DATA){
+		with_armor.options.add(new Option(ARMOR_DATA[k][0], k));
+	}
+	// 持盾的checkbox
+	var with_shield = document.querySelector('#with_shield');
+	
+	// HP相关元素
+	var maxHP=document.querySelector('#max-HP');
+	var hit_point_dice = document.querySelector('#hit_point_dice');
+
+	// 施法相关元素
+	var spellcasting_ability = document.querySelector('#spellcasting_ability');
+	var spell_save_dc = document.querySelector('#spell_save_dc');
+	var spell_attack_bonus = document.querySelector('#spell_attack_bonus');
+
+	// 特殊功能checkbox
+	var dwarvenToughness = document.querySelector('#dwarvenToughness');
+	var unarmoredDefense_monk = document.querySelector('#unarmoredDefense_monk');
+	var unarmoredDefense_barbarian = document.querySelector('#unarmoredDefense_barbarian');
+	var fightingStyle_defense = document.querySelector('#fightingStyle_defense');
+	var draconicResilience = document.querySelector('#draconicResilience');
+
+
+	// 属性调整值自动计算（触发）
+	function ability_modifier_calc (){
+		var mod;
+		for(var k in ABILITY_SCORES_INPUT){
+			mod=Math.floor((ABILITY_SCORES_INPUT[k].value-10)/2);
+			ABILITY_MODIFIER[ABILITY_SCORES_INPUT[k].name]=mod;
+			if (mod>0) {
+				mod_text = "+" + mod;
+			}else{
+				mod_text = "" + mod;
+			}
+			ABILITY_MODIFIER_TEXT[ABILITY_SCORES_INPUT[k].name].innerHTML = mod_text;
+			skill_bounds_calc();
+			saving_throws_bouns_calc();
+			armor_class_calc();
+			hit_point_calc();
+			spellcasting_ability_calc();
+			switch(ABILITY_SCORES_INPUT[k].name){
+				case "Dexterity":
+					// 先攻呈现，未考虑专长
+					initiative_bonus_text.innerHTML = mod_text;
+					break;
+				default:
+					break;
+			}
+			
+		}
+	}
+
+	// 获取熟练加值(触发)
+	function proficiency_bonus_got(){
+		PROFICIENCY_BONUS = parseInt(PROFICIENCY_BONUS_TEXT.value);
+		skill_bounds_calc();
+		saving_throws_bouns_calc();
+	}
+
+	// 技能加值自动计算expertise_persuasion
+	function skill_bounds_calc(){
+		var bouns;
+		for(var k in SKILLS){
+			if (SKILLS[k][2].checked == true) {
+				bouns = ABILITY_MODIFIER[SKILLS[k][0]]+PROFICIENCY_BONUS;
+				if (SKILLS[k][3].checked == true) {
+					bouns = bouns+PROFICIENCY_BONUS;
+				}
+			}else{
+				bouns = ABILITY_MODIFIER[SKILLS[k][0]];
+			}
+			if (bouns>0) {
+				bouns_text = "+" + bouns;
+			}else{
+				bouns_text = "" + bouns;
+			}
+			SKILLS[k][1].innerHTML=bouns_text;
+			switch(k){
+				case "perception":
+					// 被动感知 ( 察觉 )，未考虑专长
+					passive_wisdom_perception.innerHTML = 10 + bouns;
+				default:
+					break;
+			}
+		}
+	}
+
+	// 豁免加值自动计算
+	function saving_throws_bouns_calc(){
+		var bouns;
+		for(var k in SAVING_THROWS){
+			if(SAVING_THROWS[k][1].checked == 1){
+				bouns = ABILITY_MODIFIER[k] + PROFICIENCY_BONUS;
+			}else{
+				bouns = ABILITY_MODIFIER[k];
+			}		
+			if (bouns>0) {
+				bouns_text = "+" + bouns;
+			}else{
+				bouns_text = "" + bouns;
+			}
+			SAVING_THROWS[k][0].innerHTML = bouns_text;
+		}
+	}
+
+	// AC自动计算
+	function armor_class_calc(){
+		var value;
+		if(with_armor.value == ""){
+			switch(true){
+				case unarmoredDefense_monk.checked==true && with_armor.value=='' && with_shield.checked == false:
+					value = 10 + ABILITY_MODIFIER['Dexterity'] +  ABILITY_MODIFIER['Wisdom'];
+					break;
+				case unarmoredDefense_barbarian.checked==true:
+					value = 10 + ABILITY_MODIFIER['Dexterity'] +  ABILITY_MODIFIER['Constitution'];
+					break;	
+				case draconicResilience.checked == true:
+					value = 13 + ABILITY_MODIFIER['Dexterity'];
+					break;
+				default:
+					value = 10 + ABILITY_MODIFIER['Dexterity'];
+					break;
+			}
+		}else{
+			switch(true){
+				case ARMOR_DATA[with_armor.value][2] >= ABILITY_MODIFIER['Dexterity']:
+					value = ARMOR_DATA[with_armor.value][1] + ABILITY_MODIFIER['Dexterity'];
+					break;
+				case ARMOR_DATA[with_armor.value][2] < ABILITY_MODIFIER['Dexterity']:
+					value = ARMOR_DATA[with_armor.value][1] + ARMOR_DATA[with_armor.value][2];
+					break;
+				default:
+					break;
+			}
+			if(fightingStyle_defense.checked==true){
+				value += 1;
+			}
+		}
+		if (with_shield.checked == true) {
+			value += 2;
+		}	
+		armor_class.innerHTML = value;
+	}
+
+	// 1级HP自动计算
+	function hit_point_calc(){
+		if (hit_point_dice.value == '') {
+			return;
+		}else{
+			var base_hp = parseInt(hit_point_dice.value.replace('1d',''));
+			switch(true){
+				case dwarvenToughness.checked == true:
+					base_hp = base_hp+1;  // 未制作人物升级计算
+					break;
+				case draconicResilience.checked == true:
+					base_hp = base_hp+1;  // 未制作人物升级计算
+					break;
+				default:
+					break;
+			}
+			maxHP.innerHTML = base_hp + ABILITY_MODIFIER['Constitution'];
+		}
+	}
+
+	// 施法相关自动计算
+	function spellcasting_ability_calc(){
+		if (spellcasting_ability.value) {
+			spell_save_dc.innerHTML = 8 + PROFICIENCY_BONUS + ABILITY_MODIFIER[spellcasting_ability.value];
+			spell_attack_bonus.innerHTML = "+" + (PROFICIENCY_BONUS + ABILITY_MODIFIER[spellcasting_ability.value]);
+		}else{
+			spell_save_dc.innerHTML = 0;
+			spell_attack_bonus.innerHTML = 0;
+		}
+	}
+
+
+</script>
+
+
