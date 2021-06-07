@@ -5,96 +5,104 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>DND5E</title>
 	<link rel="stylesheet" href="">
+	<script type="text/javascript" src="./FileSaver.js" charset="utf-8"></script>
 	<script type="text/javascript" charset="utf-8">
-		function save_character(){
-			var SAVING = {};
-		  	var temp_key = '';
-		  	
-			var inputs = document.getElementsByTagName("input");
-			for (var i = 0; i < inputs.length; i++) {
-				if (inputs[i].id) {
-					temp_key = inputs[i].id;
-					switch(inputs[i].type){
-						case "text":
-							SAVING[temp_key] = inputs[i].value;
-							break;
-						case "checkbox":
-							SAVING[temp_key] = inputs[i].checked;
-							break;
-						case "number":
-							SAVING[temp_key] = inputs[i].value;
-							break;
-						default:
-							console.error("未知type");
-							break;
-					}
-				}
-			}
+    function save_character(){
+        var SAVING = {};
+        var temp_key = '';
+        
+        var inputs = document.getElementsByTagName("input");
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].id) {
+                temp_key = inputs[i].id;
+                switch(inputs[i].type){
+                    case "text":
+                        SAVING[temp_key] = inputs[i].value;
+                        break;
+                    case "checkbox":
+                        SAVING[temp_key] = inputs[i].checked;
+                        break;
+                    case "number":
+                        SAVING[temp_key] = inputs[i].value;
+                        break;
+                    default:
+                        console.error("未知type");
+                        break;
+                }
+            }
+        }
 
-			var selects = document.getElementsByTagName("select");
-			for (var i = 0; i < selects.length; i++) {
-				SAVING[selects[i].id] = selects[i].selectedIndex;
-			}
+        var selects = document.getElementsByTagName("select");
+        for (var i = 0; i < selects.length; i++) {
+            SAVING[selects[i].id] = selects[i].selectedIndex;
+        }
 
-			var textareas  = document.getElementsByTagName("textarea");
-			for (var i = 0; i < textareas.length; i++) {
-				SAVING[textareas[i].id] = textareas[i].value;
-			}
+        var textareas  = document.getElementsByTagName("textarea");
+        for (var i = 0; i < textareas.length; i++) {
+            SAVING[textareas[i].id] = textareas[i].value;
+        }
 
-			var jsonStr = JSON.stringify(SAVING);
+        var jsonStr = JSON.stringify(SAVING);
 
-			jsonStr = jsonStr.replace(/\\n/g,"<换行>");
-			jsonStr = "load_string='" + jsonStr +"'";
+        jsonStr = jsonStr.replace(/\\n/g,"<换行>");
+        // jsonStr = "load_string='" + jsonStr +"'";
 
-			console.log(jsonStr);
-		}
+        // console.log(jsonStr);
 
-		// 这个变量需要在控制台中手动输入,load前需要把\n替换为\\n
-		var load_string = "";
-		function load_character(){
-			// 字符串转json对象
-			var character_json = eval('(' + load_string + ')');
+        var blob = new Blob([jsonStr], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "save.json");
+    }
 
-			var inputs = document.getElementsByTagName("input");
-			for (var i = 0; i < inputs.length; i++) {
-				if (inputs[i].id) {
-					switch(inputs[i].type){
-						case "text":
-							inputs[i].value = character_json[inputs[i].id];
-							break;
-						case "checkbox":
-							inputs[i].checked = character_json[inputs[i].id];
-							break;
-						case "number":
-							inputs[i].value = character_json[inputs[i].id];
-							break;
-						default:
-							console.error("未知type");
-							break;
-					}
-				}
-			}
+    function load_character(){
+        var load_character_input=document.getElementById('load_character_input'); 
+        var load_url="archive/"+load_character_input.value+".json";
+        var request = new XMLHttpRequest();
+        request.open("get", load_url);
+        request.send(null);
+        request.onload = function () {
+            if(request.status == 200){
+                character_json =  JSON.parse(request.responseText);
+                var inputs = document.getElementsByTagName("input");
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].id) {
+                        switch(inputs[i].type){
+                            case "text":
+                                inputs[i].value = character_json[inputs[i].id];
+                                break;
+                            case "checkbox":
+                                inputs[i].checked = character_json[inputs[i].id];
+                                break;
+                            case "number":
+                                inputs[i].value = character_json[inputs[i].id];
+                                break;
+                            default:
+                                console.error("未知type");
+                                break;
+                        }
+                    }
+                }
 
-			var selects = document.getElementsByTagName("select");
-			for (var i = 0; i < selects.length; i++) {
-				selects[i].selectedIndex = character_json[selects[i].id];
-			}
+                var selects = document.getElementsByTagName("select");
+                for (var i = 0; i < selects.length; i++) {
+                    selects[i].selectedIndex = character_json[selects[i].id];
+                }
 
-			var textareas  = document.getElementsByTagName("textarea");
-			for (var i = 0; i < textareas.length; i++) {
-				textareas[i].value = character_json[textareas[i].id];
-				textareas[i].value = textareas[i].value.replace(/<换行>/g,"\n");
+                var textareas  = document.getElementsByTagName("textarea");
+                for (var i = 0; i < textareas.length; i++) {
+                    textareas[i].value = character_json[textareas[i].id];
+                    textareas[i].value = textareas[i].value.replace(/<换行>/g,"\n");
+                }
 
-			}
-
-			ability_modifier_calc();
-			proficiency_bonus_got();
-			skill_bounds_calc();
-			saving_throws_bouns_calc();
-			armor_class_calc();
-			hit_point_calc();
-			spellcasting_ability_calc();
-		}
+                ability_modifier_calc();
+                proficiency_bonus_got();
+                skill_bounds_calc();
+                saving_throws_bouns_calc();
+                armor_class_calc();
+                hit_point_calc();
+                spellcasting_ability_calc();
+            }
+        }
+    }
 	</script>
 	<style type="text/css">
 		table{
@@ -240,13 +248,15 @@
 	</style>
 </head>
 <body>
+	<!-- 控制面板 -->
 	<div id='console_div' style="z-index:99999;position:absolute;background-color: yellow;display:none">
-		<button onclick="save_character()">在控制台导出人物json</button><br>
-		<button onclick="load_character()">导入角色（需要先在控制台手动粘贴load_string变量）</button><br>
-		<button onclick="show_expertise_and_special_deal()">显示技能专精checkbox及特殊调整工具div</button><br>
-		<button onclick="hide_expertise_and_special_deal()">隐藏技能专精checkbox及特殊调整工具div</button><br>
-		<br>
-		<button onclick="(function(){document.querySelector('#console_div').style.display='none';})()">关闭控制窗口</button>
+	    <button onclick="save_character()">导出json文件（只支持PC浏览器）</button><br>
+	    <input type='text' id='load_character_input'>
+	    <button onclick="load_character()">导入角色（输入文件名称即可，不要带“.json”）</button><br>
+	    <button onclick="show_expertise_and_special_deal()">显示技能专精checkbox及特殊调整工具div</button><br>
+	    <button onclick="hide_expertise_and_special_deal()">隐藏技能专精checkbox及特殊调整工具div</button><br>
+	    <br>
+	    <button onclick="(function(){document.querySelector('#console_div').style.display='none';})()">关闭控制窗口</button>
 	</div>
 	<table id="ability_table">
 		<tr>
