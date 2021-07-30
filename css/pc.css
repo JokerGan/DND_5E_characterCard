@@ -1,0 +1,146 @@
+table{
+	border: 1px solid #000;
+	text-align:center;
+}
+td{
+	border-bottom: 1px solid #000;
+	text-align:center;
+}
+input[type="text"]{
+	width: 80px;
+}
+
+input[type="number"]{
+	width: 30px;
+}
+.input_150{
+	width: 150px !important;
+}
+.input_30{
+	width: 30px !important;
+}
+.input_150{
+	width: 150px !important;
+}
+.input_200{
+	width: 200px !important;
+}
+.expertise_skill{
+	display:none;
+}
+#ability_table{
+	position:absolute;
+	top: 0px;
+	left: 0px;
+}
+#proficiency_bonus_div{
+	position:absolute;
+	top: 380px;
+	left: 0px;
+	text-align:center;
+}
+#skills_table{
+	position:absolute;
+	top: 0px;
+	left: 110px;
+}
+#passive_wisdom_perception_div{
+	position:absolute;
+	top: 430px;
+	left: 0px;
+	border: 1px solid #000;
+	text-align:center;
+}
+#initiative_bonus_div{
+	position:absolute;
+	top: 175px;
+	left: 655px;
+	border: 1px solid #000;
+}
+#saving_throws_table{
+	position:absolute;
+	top: 180px;
+	left: 0px;
+}
+#character_info_table{
+	position:absolute;
+	top: 0px;
+	left: 270px;
+}
+#hp_info_table{
+	position:absolute;
+	top: 175px;
+	left: 270px;
+}
+#attack_table{
+	position:absolute;
+	top: 295px;
+	left: 270px;
+}
+#armor_info{
+	position:absolute;
+	top: 175px;
+	left: 550px;
+	border: 1px solid #000;
+	text-align:center;
+}
+#personal_characteristics_div{
+	position:absolute;
+	top: 770px;
+	left: 10px;
+}
+#proficiencies_language_table{
+	position:absolute;
+	top: 590px;
+	left: 10px;
+}
+#items{
+	position:absolute;
+	top: 545px;
+	left: 270px;
+}
+#items2{
+	position:absolute;
+	top: 553px;
+	left: 465px;
+	text-align:center;
+
+}
+#character_backstory_div{
+	position:absolute;
+	top: 1210px;
+	left: 0px;
+}
+#magicbook_div{
+	position:absolute;
+	top: 1100px;
+	left: 180px;
+}
+#treasures_div{
+	position:absolute;
+	top: 1690px;
+	left: 0px;
+}
+#feature_details_div{
+	position:absolute;
+	top: 2175px;
+	left: 0px;
+}
+#spellcasting_ability_div{
+	position:absolute;
+	top: 1100px;
+	left: 10px;
+}
+#special_deal_div{
+	position:absolute;
+	top: 3300px;
+	left: 10px;
+	display:none;
+}
+#rolldiv{
+	position:fixed;
+	/*position:absolute;*/
+	top:10px;
+	left:830px;
+	display: none;
+}
