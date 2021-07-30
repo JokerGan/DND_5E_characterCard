@@ -9,3 +9,6 @@
 
 ## 打印为PDF的方法
 chrome，选择边距最小值，勾选页眉页脚
+
+## 使用掷骰功能
+部署好ws_server.py，浏览器访问页面时，get传入roll=yes即可
